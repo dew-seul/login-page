@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>예약 상세</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* shadcn new-york-v4 CSS 변수 — Styling Rule: 시맨틱 컬러만 사용 */
+    :root {
+      --background:         #ffffff;
+      --foreground:         #0a0a0a;
+      --card:               #ffffff;
+      --card-foreground:    #0a0a0a;
+      --primary:            #1c1c1c;
+      --primary-foreground: #fafafa;
+      --secondary:          #f5f5f5;
+      --muted-foreground:   #737373;
+      --border:             #e5e5e5;
+      --input:              #e5e5e5;
+      --ring:               #a3a3a3;
+      --destructive:        #dc2626;
+      --destructive-foreground: #fafafa;
+      --radius-xl:  0.75rem;
+      --radius-md:  0.375rem;
+      --radius-sm:  0.25rem;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background: var(--secondary);
+      min-height: 100svh;
+      color: var(--foreground);
+      padding: 24px 16px 48px;
+    }
+
+    /* ── 페이지 레이아웃 ── */
+    .page {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px; /* Styling Rule: gap-*, space-y-* 금지 */
+    }
+
+    /* ── 헤더 ── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 0 8px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;   /* h-9 w-9 */
+      height: 36px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--background);
+      cursor: pointer;
+      color: var(--foreground);
+      flex-shrink: 0;
+    }
+
+    .back-btn:hover { background: var(--secondary); }
+
+    /* Icon Rule: 아이콘 사이즈 CSS로 제어 */
+    .back-btn svg {
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .page-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    /* ── Card (Composition Rule: full structure) ── */
+    .card {
+      background: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 0;
+    }
+
+    .card-title {
+      font-size: 0.875rem;  /* text-sm */
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .card-content {
+      padding: 16px 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px; /* Styling Rule: gap-* */
+    }
+
+    /* ── 정보 행 ── */
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .info-label {
+      font-size: 0.8125rem; /* ~13px */
+      color: var(--muted-foreground);
+      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1.5;
+    }
+
+    .info-value {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--foreground);
+      text-align: right;
+      line-height: 1.5;
+    }
+
+    .info-value.mono {
+      font-feature-settings: "tnum";
+    }
+
+    /* Composition Rule: Separator → <hr> */
+    hr.sep {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+    }
+
+    /* ── Badge (Composition Rule: Badge 사용, 커스텀 span 금지) ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: var(--radius-md);
+      padding: 2px 10px;  /* py-0.5 px-2.5 */
+      font-size: 0.75rem; /* text-xs */
+      font-weight: 500;
+      line-height: 1.5;
+      white-space: nowrap;
+    }
+
+    /* Badge: default (확정) */
+    .badge-default {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    /* Badge: secondary (완료, 대기) */
+    .badge-secondary {
+      background: var(--secondary);
+      color: var(--foreground);
+      border: 1px solid var(--border);
+    }
+
+    /* Badge: destructive (취소) */
+    .badge-destructive {
+      background: var(--destructive);
+      color: var(--destructive-foreground);
+    }
+
+    /* Badge: outline (미결제) */
+    .badge-outline {
+      background: transparent;
+      color: var(--muted-foreground);
+      border: 1px solid var(--border);
+    }
+
+    /* ── 고객 프로필 ── */
+    .customer-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px 20px;
+    }
+
+    .avatar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;   /* size-10 */
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      font-size: 0.875rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .customer-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .customer-name {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    .customer-meta {
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
+    }
+
+    /* ── 메모 ── */
+    .memo-box {
+      background: var(--secondary);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      font-size: 0.875rem;
+      color: var(--foreground);
+      line-height: 1.6;
+    }
+
+    /* ── 액션 버튼 영역 ── */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px; /* gap-2 */
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 36px;       /* h-9 */
+      padding: 0 16px;    /* px-4 */
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-family: "Inter", sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+
+    .btn-default {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+
+    .btn-default:hover { opacity: 0.9; }
+
+    .btn-outline {
+      background: var(--background);
+      color: var(--foreground);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover { background: var(--secondary); }
+
+    .btn-destructive {
+      background: transparent;
+      color: var(--destructive);
+      border: 1px solid var(--border);
+    }
+
+    .btn-destructive:hover { background: var(--secondary); }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- 헤더 -->
+    <div class="page-header">
+      <button class="back-btn" type="button" aria-label="뒤로가기">
+        <!-- Icon Rule: SVG width/height 어트리뷰트 제거, CSS로 제어 -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <span class="page-title">예약 상세</span>
+    </div>
+
+    <!-- Card: 고객 정보 (Composition Rule: full Card structure) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">고객 정보</span>
+        <!-- Badge: 방문 횟수 — 커스텀 span 금지, Badge 사용 -->
+        <span class="badge badge-secondary">7번째 방문</span>
+      </div>
+      <div class="customer-profile">
+        <!-- Avatar: CSS size-10 -->
+        <div class="avatar" aria-hidden="true">김</div>
+        <div class="customer-info">
+          <span class="customer-name">김민지</span>
+          <span class="customer-meta">010-1234-5678</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: 예약 정보 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">예약 정보</span>
+        <!-- Badge: 예약 상태 — Composition Rule: Badge 사용 -->
+        <span class="badge badge-default">확정</span>
+      </div>
+      <div class="card-content">
+        <div class="info-row">
+          <span class="info-label">날짜 · 시간</span>
+          <span class="info-value">2026.03.24 (월) 10:00</span>
+        </div>
+        <!-- Composition Rule: Separator → <hr> -->
+        <hr class="sep" />
+        <div class="info-row">
+          <span class="info-label">서비스</span>
+          <span class="info-value">헤어커트</span>
+        </div>
+        <hr class="sep" />
+        <div class="info-row">
+          <span class="info-label">담당 디자이너</span>
+          <span class="info-value">이슬 원장</span>
+        </div>
+        <hr class="sep" />
+        <!-- 제안 항목: 소요 시간 — 스케줄 관리에 유용 -->
+        <div class="info-row">
+          <span class="info-label">소요 시간</span>
+          <span class="info-value">60분</span>
+        </div>
+        <hr class="sep" />
+        <!-- 제안 항목: 예약 경로 — 유입 채널 파악 -->
+        <div class="info-row">
+          <span class="info-label">예약 경로</span>
+          <span class="info-value">카카오 예약</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: 결제 정보 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">결제 정보</span>
+        <!-- Badge: 결제 상태 -->
+        <span class="badge badge-outline">미결제</span>
+      </div>
+      <div class="card-content">
+        <div class="info-row">
+          <span class="info-label">서비스 금액</span>
+          <span class="info-value mono">50,000원</span>
+        </div>
+        <hr class="sep" />
+        <div class="info-row">
+          <span class="info-label">결제 수단</span>
+          <span class="info-value">카드</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: 메모 / 요청사항 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">요청사항</span>
+      </div>
+      <div class="card-content">
+        <div class="memo-box">앞머리 정리 원함. 레이어드 없이 일자로 잘라주세요.</div>
+      </div>
+    </div>
+
+    <!-- Card: 내부 메모 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">내부 메모</span>
+      </div>
+      <div class="card-content">
+        <div class="memo-box" style="color: var(--muted-foreground);">민감성 두피. 약한 화학제품 사용 필요. 지난 방문 시 두피 트러블 있었음.</div>
+      </div>
+    </div>
+
+    <!-- 액션 버튼 -->
+    <div class="actions">
+      <button class="btn btn-default" type="button">결제 처리</button>
+      <button class="btn btn-outline" type="button">예약 수정</button>
+      <button class="btn btn-destructive" type="button">예약 취소</button>
+    </div>
+
+  </div>
+</body>
+</html>
