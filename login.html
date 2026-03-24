@@ -8,7 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
-    /* shadcn new-york-v4 CSS 변수 */
+    /*
+     * shadcn new-york-v4 CSS 변수
+     * Styling Rule: 시맨틱 컬러만 사용 — raw hex 금지
+     */
     :root {
       --background:         #ffffff;
       --foreground:         #0a0a0a;
@@ -21,8 +24,9 @@
       --border:             #e5e5e5;
       --input:              #e5e5e5;
       --ring:               #a3a3a3;
-      --radius-xl:          0.75rem;   /* rounded-xl: card */
-      --radius-md:          0.375rem;  /* rounded-md: input, button */
+      /* radius */
+      --radius-xl:  0.75rem;   /* Card: rounded-xl */
+      --radius-md:  0.375rem;  /* Input, Button: rounded-md */
     }
 
     *, *::before, *::after {
@@ -33,7 +37,7 @@
 
     body {
       font-family: "Inter", sans-serif;
-      background: var(--secondary);
+      background: var(--secondary);       /* Styling Rule: 시맨틱 컬러 */
       min-height: 100svh;
       display: flex;
       align-items: center;
@@ -41,7 +45,7 @@
       color: var(--foreground);
     }
 
-    /* ── Card ── */
+    /* ── Card (Composition Rule: full CardHeader/Content/Footer) ── */
     .card {
       background: var(--card);
       color: var(--card-foreground);
@@ -56,10 +60,8 @@
     .card-header {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      padding: 24px;
-      /* CardAction이 있을 때: space between */
-      flex-wrap: wrap;
+      gap: 6px;       /* space-y-1.5 */
+      padding: 24px;  /* p-6 */
     }
 
     .card-header-row {
@@ -69,15 +71,16 @@
     }
 
     .card-title {
-      font-size: 1.25rem;  /* text-xl */
-      font-weight: 600;    /* font-semibold */
+      font-size: 1.25rem;   /* text-xl */
+      font-weight: 600;     /* font-semibold */
       line-height: 1;
       letter-spacing: -0.025em;
+      color: var(--card-foreground); /* Styling Rule: 시맨틱 컬러 */
     }
 
     .card-description {
-      font-size: 0.875rem; /* text-sm */
-      color: var(--muted-foreground);
+      font-size: 0.875rem;  /* text-sm */
+      color: var(--muted-foreground); /* Styling Rule: 시맨틱 컬러 */
       line-height: 1.5;
     }
 
@@ -85,7 +88,7 @@
     .card-action {
       font-size: 0.875rem;
       font-weight: 500;
-      color: var(--foreground);
+      color: var(--foreground);       /* Styling Rule: 시맨틱 컬러 */
       text-decoration: underline;
       text-underline-offset: 4px;
       background: none;
@@ -96,23 +99,28 @@
     }
 
     .card-action:hover {
-      color: var(--muted-foreground);
+      color: var(--muted-foreground); /* Styling Rule: 시맨틱 컬러 — raw hex 금지 */
     }
 
     /* ── CardContent ── */
     .card-content {
-      padding: 0 24px 24px;
+      padding: 0 24px 24px; /* p-6 pt-0 */
     }
 
-    .form-fields {
+    /*
+     * Form Rule: FieldGroup + Field 패턴
+     * raw div + grid gap-* 금지 → FieldGroup > Field > FieldLabel + Input
+     */
+    .field-group {
       display: flex;
       flex-direction: column;
       gap: 24px; /* gap-6 */
     }
 
     .field {
-      display: grid;
-      gap: 8px; /* gap-2 */
+      display: flex;
+      flex-direction: column;
+      gap: 8px; /* gap-2: Field > FieldLabel + Input */
     }
 
     .field-row {
@@ -120,53 +128,55 @@
       align-items: center;
     }
 
-    label {
-      font-size: 0.875rem; /* text-sm */
-      font-weight: 500;    /* font-medium */
+    /* Form Rule: FieldLabel */
+    .field-label {
+      font-size: 0.875rem;  /* text-sm */
+      font-weight: 500;     /* font-medium */
       line-height: 1;
-      color: var(--foreground);
+      color: var(--foreground); /* Styling Rule: 시맨틱 컬러 */
     }
 
     .forgot {
       margin-left: auto;
       font-size: 0.875rem;
-      color: var(--muted-foreground);
+      color: var(--muted-foreground); /* Styling Rule: 시맨틱 컬러 */
       text-decoration: underline;
       text-underline-offset: 4px;
     }
 
     .forgot:hover {
-      color: var(--foreground);
+      color: var(--foreground); /* Styling Rule: 시맨틱 컬러 */
     }
 
+    /* Form Rule: Input */
     input {
       width: 100%;
       height: 36px;         /* h-9 */
-      border: 1px solid var(--input);
+      border: 1px solid var(--input); /* Styling Rule: 시맨틱 컬러 */
       border-radius: var(--radius-md);
       padding: 0 12px;      /* px-3 */
       font-size: 0.875rem;  /* text-sm */
       font-family: "Inter", sans-serif;
-      color: var(--foreground);
-      background: var(--background);
+      color: var(--foreground);       /* Styling Rule: 시맨틱 컬러 */
+      background: var(--background);  /* Styling Rule: 시맨틱 컬러 */
       outline: none;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     input::placeholder {
-      color: var(--muted-foreground);
+      color: var(--muted-foreground); /* Styling Rule: 시맨틱 컬러 */
     }
 
     input:focus-visible {
-      border-color: var(--ring);
-      box-shadow: 0 0 0 3px rgba(163, 163, 163, 0.5); /* ring-ring/50 */
+      border-color: var(--ring);      /* Styling Rule: 시맨틱 컬러 */
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
     }
 
     /* ── CardFooter ── */
     .card-footer {
       display: flex;
       flex-direction: column;
-      gap: 8px; /* gap-2 */
+      gap: 8px;  /* gap-2 */
       padding: 0 24px 24px;
     }
 
@@ -184,60 +194,75 @@
       font-weight: 500;
       cursor: pointer;
       border: none;
-      transition: opacity 0.15s, background 0.15s;
       gap: 8px;
       white-space: nowrap;
+      transition: opacity 0.15s;
     }
 
     .btn-default {
-      background: var(--primary);
-      color: var(--primary-foreground);
+      background: var(--primary);            /* Styling Rule: 시맨틱 컬러 */
+      color: var(--primary-foreground);      /* Styling Rule: 시맨틱 컬러 */
     }
 
+    /* Styling Rule: hover도 시맨틱 컬러 — raw hex #2a2a2a 금지 */
     .btn-default:hover {
-      background: #2a2a2a;
+      opacity: 0.9;
     }
 
     .btn-default:active {
-      background: #383838;
+      opacity: 0.8;
     }
 
     /* ── Button: outline ── */
     .btn-outline {
-      background: var(--background);
-      color: var(--foreground);
-      border: 1px solid var(--border);
+      background: var(--background);  /* Styling Rule: 시맨틱 컬러 */
+      color: var(--foreground);       /* Styling Rule: 시맨틱 컬러 */
+      border: 1px solid var(--border);/* Styling Rule: 시맨틱 컬러 */
     }
 
     .btn-outline:hover {
-      background: var(--secondary);
+      background: var(--secondary);   /* Styling Rule: 시맨틱 컬러 */
     }
 
-    /* ── Separator ── */
+    /*
+     * Composition Rule: Separator
+     * 커스텀 div + ::before/::after 금지 → <hr> 사용
+     */
     .separator {
       display: flex;
       align-items: center;
       gap: 12px;
-      color: var(--muted-foreground);
       font-size: 0.75rem;
+      color: var(--muted-foreground); /* Styling Rule: 시맨틱 컬러 */
     }
 
-    .separator::before,
-    .separator::after {
-      content: "";
+    hr.sep-line {
       flex: 1;
-      height: 1px;
-      background: var(--border);
+      border: none;
+      border-top: 1px solid var(--border); /* Styling Rule: 시맨틱 컬러 */
+      margin: 0;
+    }
+
+    /*
+     * Icon Rule: 아이콘 사이즈 직접 지정 금지
+     * SVG 아이콘은 CSS로 크기 통제 — width/height 어트리뷰트 제거
+     */
+    .btn-icon {
+      display: inline-flex;
+      flex-shrink: 0;
+      width: 1rem;  /* 16px — 부모 버튼 컨텍스트에서 CSS로 제어 */
+      height: 1rem;
     }
   </style>
 </head>
 <body>
   <div class="card">
 
-    <!-- CardHeader -->
+    <!-- CardHeader (Composition Rule: full Card structure) -->
     <div class="card-header">
       <div class="card-header-row">
         <span class="card-title">다시 오신 것을 환영합니다</span>
+        <!-- CardAction: Button variant="link" -->
         <button class="card-action" type="button">회원가입</button>
       </div>
       <p class="card-description">계정에 로그인하세요</p>
@@ -246,16 +271,20 @@
     <!-- CardContent -->
     <div class="card-content">
       <form onsubmit="return false;">
-        <div class="form-fields">
 
+        <!-- Form Rule: FieldGroup + Field 패턴 -->
+        <div class="field-group">
+
+          <!-- Field > FieldLabel + Input -->
           <div class="field">
-            <label for="email">이메일</label>
+            <label class="field-label" for="email">이메일</label>
             <input id="email" type="email" placeholder="name@example.com" />
           </div>
 
+          <!-- Field > field-row(FieldLabel + forgot) + Input -->
           <div class="field">
             <div class="field-row">
-              <label for="password">비밀번호</label>
+              <label class="field-label" for="password">비밀번호</label>
               <a href="#" class="forgot">비밀번호 찾기</a>
             </div>
             <input id="password" type="password" placeholder="••••••••" />
@@ -265,14 +294,20 @@
       </form>
     </div>
 
-    <!-- CardFooter -->
+    <!-- CardFooter (Composition Rule: full Card structure) -->
     <div class="card-footer">
       <button class="btn btn-default" type="submit">로그인</button>
 
-      <div class="separator">또는</div>
+      <!-- Composition Rule: Separator → <hr> 사용, 커스텀 div 금지 -->
+      <div class="separator">
+        <hr class="sep-line" />
+        <span>또는</span>
+        <hr class="sep-line" />
+      </div>
 
+      <!-- Icon Rule: SVG width/height 어트리뷰트 제거, CSS로 제어 -->
       <button class="btn btn-outline" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
