@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>체험단 등록</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* shadcn new-york-v4 — Styling Rule: 시맨틱 컬러만 사용 */
+    :root {
+      --background:         #ffffff;
+      --foreground:         #0a0a0a;
+      --card:               #ffffff;
+      --card-foreground:    #0a0a0a;
+      --primary:            #1c1c1c;
+      --primary-foreground: #fafafa;
+      --secondary:          #f5f5f5;
+      --muted-foreground:   #737373;
+      --border:             #e5e5e5;
+      --input:              #e5e5e5;
+      --ring:               #a3a3a3;
+      --radius-xl: 0.75rem;
+      --radius-md: 0.375rem;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background: var(--secondary);
+      min-height: 100svh;
+      color: var(--foreground);
+    }
+
+    /* ── 플로우 컨테이너 ── */
+    .flow {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      background: var(--background);
+    }
+
+    /* ── 상단 헤더 (고정) ── */
+    .flow-header {
+      padding: 16px 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--background);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--background);
+      cursor: pointer;
+      color: var(--foreground);
+      flex-shrink: 0;
+    }
+    .back-btn:hover { background: var(--secondary); }
+    /* Icon Rule: CSS로 크기 제어 */
+    .back-btn svg { width: 0.875rem; height: 0.875rem; }
+
+    .header-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .step-label { font-size: 0.75rem; color: var(--muted-foreground); }
+    .step-title { font-size: 0.9375rem; font-weight: 600; }
+
+    /* 프로그레스 바 */
+    .progress-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    /* ── 스텝 콘텐츠 ── */
+    .steps-wrapper {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .step {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      padding: 24px 20px 120px;
+      height: 100%;
+      overflow-y: auto;
+    }
+    .step.active { display: flex; }
+
+    /* ── Card (Composition Rule: full structure) ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .card-title    { font-size: 0.875rem; font-weight: 600; }
+    .card-desc     { font-size: 0.8125rem; color: var(--muted-foreground); }
+    .card-content  { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* Composition Rule: Separator → <hr> */
+    hr.sep { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Form Rule: FieldGroup + Field ── */
+    .field-group { display: flex; flex-direction: column; gap: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+
+    .field-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--foreground);
+    }
+    .field-desc {
+      font-size: 0.8125rem;
+      color: var(--muted-foreground);
+      line-height: 1.5;
+      margin-top: -4px;
+    }
+
+    /* Form Rule: FieldSet + FieldLegend */
+    fieldset { border: none; padding: 0; }
+    legend {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--foreground);
+      margin-bottom: 12px;
+      float: left;
+      width: 100%;
+    }
+
+    /* ── Input ── */
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--input);
+      border-radius: var(--radius-md);
+      padding: 0 12px;
+      font-size: 0.875rem;
+      font-family: "Inter", sans-serif;
+      color: var(--foreground);
+      background: var(--background);
+      outline: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input::placeholder { color: var(--muted-foreground); }
+    input:focus-visible {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+    }
+
+    /* ── Textarea ── */
+    textarea {
+      width: 100%;
+      min-height: 88px;
+      border: 1px solid var(--input);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 0.875rem;
+      font-family: "Inter", sans-serif;
+      color: var(--foreground);
+      background: var(--background);
+      outline: none;
+      resize: vertical;
+      line-height: 1.5;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    textarea::placeholder { color: var(--muted-foreground); }
+    textarea:focus-visible {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+    }
+
+    /* InputGroup 패턴 */
+    .input-addon-wrap {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--input);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: var(--background);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-addon-wrap:focus-within {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 50%, transparent);
+    }
+    .input-addon-wrap input {
+      border: none;
+      flex: 1;
+      border-radius: 0;
+      outline: none;
+      box-shadow: none !important;
+    }
+    .input-addon {
+      padding: 0 12px;
+      font-size: 0.875rem;
+      color: var(--muted-foreground);
+      background: var(--secondary);
+      border-left: 1px solid var(--input);
+      height: 36px;
+      display: flex;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    /* 날짜 행 */
+    .date-row { display: flex; align-items: center; gap: 8px; }
+    .date-sep { font-size: 0.875rem; color: var(--muted-foreground); flex-shrink: 0; }
+
+    /* Form Rule: ToggleGroup for 2–7 choice option sets */
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .toggle-item {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-family: "Inter", sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--background);
+      color: var(--foreground);
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .toggle-item:hover { background: var(--secondary); }
+    .toggle-item.on {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      border-color: var(--primary);
+    }
+
+    /* ── 유형 카드 선택 (Step 1) ── */
+    .type-cards { display: flex; flex-direction: column; gap: 10px; }
+
+    .type-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 16px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .type-card:hover { background: var(--secondary); }
+    .type-card.on {
+      border-color: var(--primary);
+      background: var(--background);
+    }
+
+    .type-card-radio {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      margin-top: 2px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s;
+    }
+    .type-card.on .type-card-radio {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+    .type-card.on .type-card-radio::after {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--primary-foreground);
+    }
+
+    .type-card-text { display: flex; flex-direction: column; gap: 4px; }
+    .type-card-name { font-size: 0.9375rem; font-weight: 600; }
+    .type-card-desc { font-size: 0.8125rem; color: var(--muted-foreground); line-height: 1.5; }
+
+    /* Badge (Composition Rule: Badge 사용) */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: var(--radius-md);
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    .badge-secondary { background: var(--secondary); color: var(--foreground); border: 1px solid var(--border); }
+    .badge-default   { background: var(--primary); color: var(--primary-foreground); }
+
+    /* ── 완료 화면 (Step 5) ── */
+    .complete-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 48px 20px 120px;
+      gap: 32px;
+    }
+    .complete-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .complete-icon svg { width: 28px; height: 28px; color: var(--primary-foreground); }
+    .complete-texts { display: flex; flex-direction: column; gap: 8px; }
+    .complete-title { font-size: 1.25rem; font-weight: 600; }
+    .complete-desc  { font-size: 0.875rem; color: var(--muted-foreground); line-height: 1.6; }
+
+    .summary-card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      gap: 12px;
+    }
+    .summary-row + .summary-row { border-top: 1px solid var(--border); }
+    .summary-label { font-size: 0.8125rem; color: var(--muted-foreground); }
+    .summary-value { font-size: 0.875rem; font-weight: 500; }
+
+    /* ── 하단 고정 버튼 ── */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      padding: 12px 20px;
+      background: var(--background);
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      height: 44px;
+      padding: 0 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.9375rem;
+      font-family: "Inter", sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+    .btn-default {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+    .btn-default:hover { opacity: 0.9; }
+    .btn-outline {
+      background: var(--background);
+      color: var(--foreground);
+      border: 1px solid var(--border);
+      flex: 0 0 auto;
+      width: 56px;
+    }
+    .btn-outline:hover { background: var(--secondary); }
+    .btn-outline svg { width: 1rem; height: 1rem; }
+  </style>
+</head>
+<body>
+<div class="flow">
+
+  <!-- 헤더 -->
+  <div class="flow-header">
+    <div class="header-top">
+      <button class="back-btn" onclick="goBack()" aria-label="뒤로가기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <div class="header-titles">
+        <span class="step-label" id="stepLabel">1 / 4단계</span>
+        <span class="step-title" id="stepTitle">체험단 유형 선택</span>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 25%"></div>
+    </div>
+  </div>
+
+  <!-- 스텝 콘텐츠 -->
+  <div class="steps-wrapper">
+
+    <!-- ─── Step 1: 체험단 유형 ─── -->
+    <div class="step active" id="step1">
+      <!-- Form Rule: RadioGroup 패턴 (Card 형태의 선택지) -->
+      <div class="type-cards" role="radiogroup" aria-label="체험단 유형">
+        <div class="type-card on" onclick="selectType(this)" role="radio" aria-checked="true" tabindex="0">
+          <div class="type-card-radio"></div>
+          <div class="type-card-text">
+            <span class="type-card-name">방문형</span>
+            <span class="type-card-desc">인플루언서가 샵을 직접 방문해 서비스를 체험하고 리뷰를 작성해요. SNS 도달력 높은 콘텐츠를 기대할 수 있어요.</span>
+          </div>
+        </div>
+        <div class="type-card" onclick="selectType(this)" role="radio" aria-checked="false" tabindex="0">
+          <div class="type-card-radio"></div>
+          <div class="type-card-text">
+            <span class="type-card-name">기자단</span>
+            <span class="type-card-desc">정보·사진·제품 등을 제공하고 온라인 리뷰 작성을 요청해요. 방문 없이 진행할 수 있어요.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Step 2: 서비스 정보 ─── -->
+    <div class="step" id="step2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">서비스 종류</span>
+        </div>
+        <div class="card-content">
+          <!-- Form Rule: ToggleGroup — 4개 선택지, Button 루프 금지 -->
+          <div class="field">
+            <div class="toggle-group" role="radiogroup" aria-label="서비스 종류">
+              <button class="toggle-item on" onclick="selectToggle(this,'svc')" aria-checked="true">헤어</button>
+              <button class="toggle-item" onclick="selectToggle(this,'svc')" aria-checked="false">네일</button>
+              <button class="toggle-item" onclick="selectToggle(this,'svc')" aria-checked="false">피부</button>
+              <button class="toggle-item" onclick="selectToggle(this,'svc')" aria-checked="false">기타</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">제공 서비스 내용</span>
+          <span class="card-desc">인플루언서에게 제공할 시술을 구체적으로 입력해주세요.</span>
+        </div>
+        <div class="card-content">
+          <!-- Form Rule: Field + Textarea -->
+          <div class="field">
+            <textarea placeholder="예: 컷 + 드라이 1회 (약 60분), 별도 케어 없음&#10;&#10;시술명과 소요 시간을 함께 적어주시면 인플루언서가 일정 잡기 쉬워요." rows="4"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Step 3: 모집 조건 ─── -->
+    <div class="step" id="step3">
+      <!-- Form Rule: FieldSet + FieldLegend for grouping -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">모집 인원 및 기간</span>
+        </div>
+        <div class="card-content">
+          <fieldset>
+            <div class="field-group">
+              <div class="field">
+                <label class="field-label" for="count">모집 인원</label>
+                <!-- InputGroup 패턴: Input + Addon -->
+                <div class="input-addon-wrap">
+                  <input type="number" id="count" placeholder="5" min="1" max="99" value="5" />
+                  <span class="input-addon">명</span>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">모집 기간</label>
+                <div class="date-row">
+                  <input type="date" value="2026-04-01" />
+                  <span class="date-sep">~</span>
+                  <input type="date" value="2026-04-14" />
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">체험 마감일</span>
+          <span class="card-desc">선정된 인플루언서가 방문을 완료해야 하는 날짜예요.</span>
+        </div>
+        <div class="card-content">
+          <div class="field">
+            <input type="date" value="2026-04-30" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Step 4: 인플루언서 조건 ─── -->
+    <div class="step" id="step4">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">SNS 채널</span>
+          <span class="card-desc">활동 채널을 가진 인플루언서만 지원할 수 있어요. 복수 선택 가능해요.</span>
+        </div>
+        <div class="card-content">
+          <!-- Form Rule: ToggleGroup 다중 선택 -->
+          <div class="field">
+            <div class="toggle-group" role="group" aria-label="SNS 채널 (다중 선택)">
+              <button class="toggle-item on" onclick="toggleMulti(this)" aria-pressed="true">인스타그램</button>
+              <button class="toggle-item on" onclick="toggleMulti(this)" aria-pressed="true">유튜브</button>
+              <button class="toggle-item" onclick="toggleMulti(this)" aria-pressed="false">틱톡</button>
+              <button class="toggle-item" onclick="toggleMulti(this)" aria-pressed="false">블로그</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">최소 팔로워 수</span>
+          <span class="card-desc">이 수 미만의 인플루언서는 지원할 수 없어요. 0이면 제한 없음이에요.</span>
+        </div>
+        <div class="card-content">
+          <div class="input-addon-wrap">
+            <input type="number" placeholder="1000" min="0" value="1000" />
+            <span class="input-addon">명 이상</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">결과물 요구사항</span>
+          <span class="card-desc">인플루언서가 업로드해야 하는 콘텐츠 형식이에요. 복수 선택 가능해요.</span>
+        </div>
+        <div class="card-content">
+          <!-- Form Rule: ToggleGroup 다중 선택 -->
+          <div class="toggle-group" role="group" aria-label="결과물 형식 (다중 선택)">
+            <button class="toggle-item on" onclick="toggleMulti(this)" aria-pressed="true">피드 포스팅</button>
+            <button class="toggle-item" onclick="toggleMulti(this)" aria-pressed="false">스토리</button>
+            <button class="toggle-item" onclick="toggleMulti(this)" aria-pressed="false">릴스/숏츠</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Step 5: 등록 완료 ─── -->
+    <div class="step" id="step5">
+      <div class="complete-screen">
+        <div class="complete-icon">
+          <!-- Icon Rule: CSS로 크기 제어 -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="complete-texts">
+          <span class="complete-title">체험단 등록 완료!</span>
+          <span class="complete-desc">인플루언서들이 신청할 수 있도록<br>체험단이 등록됐어요. 지원 현황은<br>체험단 관리 페이지에서 확인하세요.</span>
+        </div>
+
+        <!-- Composition Rule: Card full structure -->
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-label">유형</span>
+            <!-- Badge: Composition Rule -->
+            <span class="badge badge-default">방문형</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">서비스</span>
+            <span class="summary-value">헤어 · 컷 + 드라이</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">모집 인원</span>
+            <span class="summary-value">5명</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">모집 기간</span>
+            <span class="summary-value">4.1 ~ 4.14</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">채널 조건</span>
+            <!-- Badge: Composition Rule -->
+            <div style="display:flex;gap:4px;">
+              <span class="badge badge-secondary">인스타그램</span>
+              <span class="badge badge-secondary">유튜브</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /steps-wrapper -->
+
+  <!-- 하단 버튼 -->
+  <div class="bottom-bar" id="bottomBar">
+    <button class="btn btn-outline" id="btnPrev" onclick="goBack()" aria-label="이전">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <button class="btn btn-default" id="btnNext" onclick="goNext()">다음</button>
+  </div>
+
+</div>
+
+<script>
+  const STEPS = [
+    { label: "1 / 4단계", title: "체험단 유형 선택",   progress: 25  },
+    { label: "2 / 4단계", title: "서비스 정보 입력",    progress: 50  },
+    { label: "3 / 4단계", title: "모집 조건 설정",      progress: 75  },
+    { label: "4 / 4단계", title: "인플루언서 조건 설정", progress: 100 },
+    { label: "",          title: "등록 완료",            progress: 100 },
+  ];
+
+  let current = 0;
+
+  function render() {
+    document.querySelectorAll('.step').forEach((s, i) => {
+      s.classList.toggle('active', i === current);
+    });
+
+    const s = STEPS[current];
+    document.getElementById('stepLabel').textContent    = s.label;
+    document.getElementById('stepTitle').textContent    = s.title;
+    document.getElementById('progressFill').style.width = s.progress + '%';
+
+    const isComplete = current === 4;
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+
+    if (isComplete) {
+      btnPrev.style.display = 'none';
+      btnNext.style.flex    = '1';
+      btnNext.textContent   = '체험단 관리로 이동';
+    } else {
+      btnPrev.style.display = current === 0 ? 'none' : 'inline-flex';
+      btnNext.style.flex    = '1';
+      btnNext.textContent   = current === 3 ? '등록하기' : '다음';
+    }
+  }
+
+  function goNext() {
+    if (current < STEPS.length - 1) { current++; render(); window.scrollTo(0,0); }
+  }
+
+  function goBack() {
+    if (current > 0) { current--; render(); window.scrollTo(0,0); }
+  }
+
+  /* Form Rule: ToggleGroup 단일 선택 */
+  function selectToggle(el, group) {
+    document.querySelectorAll(`[onclick="selectToggle(this,'${group}')"]`).forEach(b => {
+      b.classList.remove('on');
+      b.setAttribute('aria-checked', 'false');
+    });
+    el.classList.add('on');
+    el.setAttribute('aria-checked', 'true');
+  }
+
+  /* Form Rule: ToggleGroup 다중 선택 */
+  function toggleMulti(el) {
+    const on = el.classList.toggle('on');
+    el.setAttribute('aria-pressed', on);
+  }
+
+  /* Step 1: 유형 카드 선택 */
+  function selectType(el) {
+    document.querySelectorAll('.type-card').forEach(c => {
+      c.classList.remove('on');
+      c.setAttribute('aria-checked', 'false');
+    });
+    el.classList.add('on');
+    el.setAttribute('aria-checked', 'true');
+  }
+
+  render();
+</script>
+</body>
+</html>
