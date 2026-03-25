@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>예약 취소 사유 분석 보고서</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F4F1EB;
+    --bg2: #EAE6DC;
+    --ink: #1A1714;
+    --ink2: #5A5650;
+    --ink3: #9A958F;
+    --accent: #C84B2F;
+    --accent2: #E8A020;
+    --teal: #1D7A6B;
+    --purple: #5A4AB0;
+    --card: #FDFBF7;
+    --border: rgba(26,23,20,0.12);
+    --serif: 'Noto Sans KR', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body {
+    font-family: var(--serif);
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 60px 48px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(200,75,47,0.18);
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 200px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(232,160,32,0.12);
+  }
+  .header-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  header h1 {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .header-sub {
+    font-size: 15px;
+    color: rgba(244,241,235,0.55);
+    font-weight: 300;
+  }
+  .header-meta {
+    position: absolute;
+    top: 60px; right: 48px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: rgba(244,241,235,0.4);
+    line-height: 1.8;
+  }
+
+  /* LAYOUT */
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  section { margin-bottom: 56px; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--ink3);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--border);
+  }
+
+  /* METRIC CARDS */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .metric-card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 20px;
+  }
+  .metric-card.accent { background: var(--accent); border-color: var(--accent); }
+  .metric-label {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink3);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+  .metric-card.accent .metric-label { color: rgba(255,255,255,0.65); }
+  .metric-value {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .metric-card.accent .metric-value { color: #fff; }
+  .metric-note {
+    font-size: 12px;
+    color: var(--ink3);
+    margin-top: 6px;
+  }
+  .metric-card.accent .metric-note { color: rgba(255,255,255,0.55); }
+
+  /* CHART */
+  .chart-card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .chart-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink2);
+    margin-bottom: 24px;
+  }
+  .chart-wrap { position: relative; width: 100%; height: 280px; }
+
+  /* CATEGORY BREAKDOWN */
+  .breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .breakdown-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 60px;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .cat-name {
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cat-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .bar-wrap {
+    height: 6px;
+    background: var(--bg2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease;
+  }
+  .cat-count {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink2);
+    text-align: right;
+  }
+
+  /* DETAIL TABLE */
+  .detail-card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .detail-header {
+    display: grid;
+    grid-template-columns: 1fr 80px;
+    padding: 14px 24px;
+    background: var(--bg2);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .detail-row {
+    display: grid;
+    grid-template-columns: 1fr 80px;
+    padding: 14px 24px;
+    border-bottom: 0.5px solid var(--border);
+    align-items: start;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink2);
+    padding-right: 16px;
+  }
+  .detail-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* INSIGHTS */
+  .insights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .insight-card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .insight-card.highlight {
+    border-color: var(--accent);
+    background: #FEF5F3;
+  }
+  .insight-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink3);
+    margin-bottom: 10px;
+  }
+  .insight-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .insight-body {
+    font-size: 13px;
+    color: var(--ink2);
+    line-height: 1.7;
+  }
+  .insight-card.highlight .insight-title { color: var(--accent); }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 32px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink3);
+    letter-spacing: 0.1em;
+    border-top: 0.5px solid var(--border);
+  }
+
+  /* DONUT */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 640px) {
+    .two-col { grid-template-columns: 1fr; }
+    header { padding: 40px 24px 36px; }
+    .header-meta { display: none; }
+    .breakdown-row { grid-template-columns: 110px 1fr 50px; }
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 2px;
+    background: var(--bg2);
+    color: var(--ink2);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-label">예약 관리 분석 리포트</div>
+  <h1>예약 취소 사유<br>분석 보고서</h1>
+  <p class="header-sub">공비서 예약 데이터 기반 · 배포일 이후 누적 집계</p>
+  <div class="header-meta">
+    집계 기간<br>2026.03.17<br>~ 2026.03.25 17:30<br><br>
+    총 데이터<br>144건
+  </div>
+</header>
+
+<main>
+
+  <!-- 01. 요약 -->
+  <section>
+    <div class="section-label">01 — 핵심 요약</div>
+    <div class="metrics">
+      <div class="metric-card accent">
+        <div class="metric-label">전체 취소 건수</div>
+        <div class="metric-value">144</div>
+        <div class="metric-note">건 (전체 데이터)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Default 사유 (시술 불가 시간)</div>
+        <div class="metric-value">82</div>
+        <div class="metric-note">건 · 57%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">직접 입력 취소 사유</div>
+        <div class="metric-value">62</div>
+        <div class="metric-note">건 · 43%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">최다 직접 입력 사유</div>
+        <div class="metric-value" style="font-size:22px; margin-top:4px;">예약 변경</div>
+        <div class="metric-note">19건 · 직접입력의 31%</div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="background: #1A1714; border-color: transparent;">
+      <div class="chart-title" style="color: rgba(244,241,235,0.5);">취소 구성 비율</div>
+      <div style="display: flex; align-items: center; gap: 32px; flex-wrap: wrap;">
+        <div style="position: relative; width: 160px; height: 160px; flex-shrink: 0;">
+          <canvas id="donutChart"></canvas>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+            <span style="width:10px;height:10px;border-radius:2px;background:#C84B2F;flex-shrink:0;"></span>
+            <span style="font-size:13px;color:rgba(244,241,235,0.85);flex:1;">Default 사유 (시술 불가 시간)</span>
+            <span style="font-family:var(--mono);font-size:13px;color:#C84B2F;font-weight:500;">82건 · 57%</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+            <span style="width:10px;height:10px;border-radius:2px;background:#E8A020;flex-shrink:0;"></span>
+            <span style="font-size:13px;color:rgba(244,241,235,0.85);flex:1;">직접 입력 취소 사유</span>
+            <span style="font-family:var(--mono);font-size:13px;color:#E8A020;font-weight:500;">62건 · 43%</span>
+          </div>
+          <div style="margin-top:20px;padding:14px;background:rgba(244,241,235,0.05);border-radius:8px;border-left:2px solid #C84B2F;">
+            <p style="font-size:12px;color:rgba(244,241,235,0.5);line-height:1.7;">
+              Default 사유 82건은 앱에서 자동 선택된 값으로, 실제 취소 이유를 반영하지 않습니다. 
+              의미 있는 분석은 직접 입력 62건을 기준으로 합니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02. 직접 입력 분석 -->
+  <section>
+    <div class="section-label">02 — 직접 입력 취소 사유 분석 (62건)</div>
+
+    <div class="chart-card">
+      <div class="chart-title">카테고리별 분포</div>
+      <div class="chart-wrap">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">카테고리별 비중</div>
+      <div class="breakdown">
+        <div class="breakdown-row">
+          <div class="cat-name"><span class="cat-dot" style="background:#D85A30;"></span>예약 변경</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#D85A30;"></div></div>
+          <div class="cat-count">19건 31%</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="cat-name"><span class="cat-dot" style="background:#7F77DD;"></span>고객 요청/사정</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:79%;background:#7F77DD;"></div></div>
+          <div class="cat-count">15건 24%</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="cat-name"><span class="cat-dot" style="background:#888780;"></span>기타/불명확</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:63%;background:#888780;"></div></div>
+          <div class="cat-count">12건 19%</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="cat-name"><span class="cat-dot" style="background:#BA7517;"></span>채널·앱 안내</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:53%;background:#BA7517;"></div></div>
+          <div class="cat-count">10건 16%</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="cat-name"><span class="cat-dot" style="background:#1D9E75;"></span>업체 사정</div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:32%;background:#1D9E75;"></div></div>
+          <div class="cat-count">6건 10%</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03. 카테고리별 상세 -->
+  <section>
+    <div class="section-label">03 — 카테고리별 상세 내역</div>
+    <div class="detail-card">
+      <div class="detail-header">
+        <span>취소 사유 내용</span>
+        <span style="text-align:right;">카테고리</span>
+      </div>
+
+      <div class="detail-row">
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:6px;">예약 변경 — 19건</div>
+          <div class="detail-text">
+            <span class="tag">시간변경</span><span class="tag">예약변경</span><span class="tag">예약시간변경</span><span class="tag">예약변경요청</span><span class="tag">금요일예약변경</span><span class="tag">수요일로변경</span><span class="tag">월요일에하심</span><span class="tag">내일로변경</span><span class="tag">다음주에뵈어요</span><span class="tag">25일예약으로기존취소</span>
+          </div>
+        </div>
+        <div style="text-align:right;padding-top:2px;">
+          <span class="detail-badge" style="background:#FBE9E4;color:#993C1D;">예약 변경</span>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:6px;">고객 요청/사정 — 15건</div>
+          <div class="detail-text">
+            <span class="tag">고객요청취소</span><span class="tag">고객님사정으로인한취소</span><span class="tag">고객님변경원하심</span><span class="tag">고객취소</span><span class="tag">취소요청</span><span class="tag">취소</span><span class="tag">고객님일정조율</span><span class="tag">가정의갑작스런큰일</span><span class="tag">고객님이취소원함</span><span class="tag">자동차문제</span>
+          </div>
+        </div>
+        <div style="text-align:right;padding-top:2px;">
+          <span class="detail-badge" style="background:#EEEDFE;color:#3C3489;">고객 사정</span>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:6px;">채널·앱 안내 — 10건</div>
+          <div class="detail-text">
+            <span class="tag">공비서앱예약불가안내</span><span class="tag">네이버로예약요청</span><span class="tag">카톡채널문의요청</span><span class="tag">안내드린방법으로예약</span><span class="tag">문자확인부탁</span><span class="tag">공비서예약판이용안내</span>
+          </div>
+        </div>
+        <div style="text-align:right;padding-top:2px;">
+          <span class="detail-badge" style="background:#FAEEDA;color:#633806;">채널 안내</span>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:6px;">기타/불명확 — 12건</div>
+          <div class="detail-text">
+            <span class="tag">중복예약취소</span><span class="tag">이중예약건</span><span class="tag">예약금미입금자동취소</span><span class="tag">무료보수</span><span class="tag">회원권구매고객재예약</span><span class="tag">특정고객이름등록안내</span><span class="tag">단순"."입력</span>
+          </div>
+        </div>
+        <div style="text-align:right;padding-top:2px;">
+          <span class="detail-badge" style="background:#F1EFE8;color:#444441;">기타</span>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div>
+          <div style="font-size:12px;font-weight:500;color:var(--ink);margin-bottom:6px;">업체 사정 — 6건</div>
+          <div class="detail-text">
+            <span class="tag">개인사정휴무(차단미흡)</span><span class="tag">내일일정있어불가</span><span class="tag">죄송합니다ㅠㅠ</span><span class="tag">15분이상지각시자동취소</span>
+          </div>
+        </div>
+        <div style="text-align:right;padding-top:2px;">
+          <span class="detail-badge" style="background:#E1F5EE;color:#085041;">업체 사정</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+
+</main>
+
+<footer>
+  CANCEL REASON ANALYSIS · 2026.03.17 – 2026.03.25 17:30 · POWERED BY CLAUDE
+</footer>
+
+<script>
+  const donutCtx = document.getElementById('donutChart').getContext('2d');
+  new Chart(donutCtx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [82, 62],
+        backgroundColor: ['#C84B2F', '#E8A020'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    },
+    plugins: [{
+      id: 'center',
+      beforeDraw(chart) {
+        const { ctx, chartArea: { width, height, left, top } } = chart;
+        ctx.save();
+        ctx.font = '700 22px "Noto Sans KR"';
+        ctx.fillStyle = '#F4F1EB';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('144', left + width / 2, top + height / 2 - 8);
+        ctx.font = '300 11px "Noto Sans KR"';
+        ctx.fillStyle = 'rgba(244,241,235,0.4)';
+        ctx.fillText('건', left + width / 2, top + height / 2 + 14);
+        ctx.restore();
+      }
+    }]
+  });
+
+  const barCtx = document.getElementById('barChart').getContext('2d');
+  new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: ['예약 변경', '고객 요청/사정', '기타/불명확', '채널·앱 안내', '업체 사정'],
+      datasets: [{
+        data: [19, 15, 12, 10, 6],
+        backgroundColor: ['#D85A30','#7F77DD','#888780','#BA7517','#1D9E75'],
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.raw}건 (${Math.round(ctx.raw / 62 * 100)}%)`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 12, family: "'Noto Sans KR'" }, color: '#9A958F' }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(26,23,20,0.06)' },
+          ticks: {
+            font: { size: 11, family: "'DM Mono'" },
+            color: '#9A958F',
+            callback: v => v + '건',
+            stepSize: 5
+          }
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
